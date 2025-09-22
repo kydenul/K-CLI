@@ -1,0 +1,51 @@
+# Log settings
+prefix: "K-CLI"
+directory: "./logs"
+filename: "Client"
+level: "info"
+format: "console"
+time_layout: "2006-01-02 15:04:05.000"
+# Basic settings
+disable_caller: false
+disable_stacktrace: false
+disable_split_error: true
+console_output: false
+# File rotation
+max_size: 100
+max_backups: 5
+compress: false
+# Sampling (reduces log volume in high-traffic scenarios)
+enable_sampling: false
+sample_initial: 100
+sample_thereafter: 1000
+
+# Client settings
+K-CLI:
+  # OpenAI
+  provider: "OpenAI"
+  model: "deepseek/deepseek-chat-v3.1:free"
+  base_url: "https://openrouter.ai/api"
+  custom_api_path: "/v1/chat/completions"
+  api_key: "sk-or-v1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+  # Ollama
+  # provider: "Ollama"
+  # model: "llama3.1"
+  # base_url: "http://localhost:11434/api"
+  # custom_api_path: "/chat"
+
+  # # Hunyran Taiji
+  # provider: "HunyranTaiji"
+  # model: "DeepSeek-V3_1-Online-128k"
+  # base_url: "http://api.taiji.woa.com"
+  # custom_api_path: "/openapi/chat/completions"
+  # api_key: "XLhYXn5gnErB9g9ALxM50PbFltXtR6Jp"
+
+  max_turns: 5
+
+  storage_type: "file"
+  mcp_server_path: "./config/mcp_server.json"
+  prompt_path: "./config/prompts.jsonl"
+
+  max_tokens: 32768
+  reasoning_effort: 0
