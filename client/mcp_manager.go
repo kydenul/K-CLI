@@ -463,9 +463,7 @@ func (ss *MCPSvrManager) FormatServerInfo(ctx context.Context) string {
 		))
 	}
 
-	tempStr := strings.Join(serverSections, "\n\n")
-	ss.Infof(tempStr)
-	return tempStr
+	return strings.Join(serverSections, "\n\n")
 }
 
 // Prompt generate the complete system prompt including MCP server information

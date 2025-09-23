@@ -54,6 +54,7 @@ type Config struct {
 	MaxTurns        uint    `mapstructure:"max_turns"`        // 最多调用 MCP Server 的次数
 	MaxTokens       uint64  `mapstructure:"max_tokens"`       // 最大 token 数
 	ReasoningEffort float64 `mapstructure:"reasoning_effort"` // 推理努力度
+	Stream          bool    `mapstructure:"stream"`           // 是否使用流式输出
 }
 
 // NewDefaultConfig returns a new Config with default values

@@ -78,7 +78,7 @@ func (p *OllamaFormatProvider) BuildRequest(
 				"content": message.Content,
 			}
 		}),
-		Stream: true,
+		Stream: p.config.Stream,
 	}
 
 	jsonBody, err := sonic.Marshal(body)

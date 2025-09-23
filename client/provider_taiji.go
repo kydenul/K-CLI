@@ -66,8 +66,7 @@ func (p *TaijiProvider) BuildRequest(
 		Temperature: p.config.ReasoningEffort,
 		TopP:        1.0,
 		MaxTokens:   p.config.MaxTokens,
-
-		Stream: false,
+		Stream:      p.config.Stream,
 	}
 
 	// NOTE DeepSeek-V3_1 => thinking
@@ -104,7 +103,6 @@ func (p *TaijiProvider) BuildRequest(
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+p.config.APIKey)
 
-	// XXX: 调用辅助函数生成 curl 命令字符串
 	curlCmd, _ := p.GenerateCurlCommand(req, jsonBody)
 	p.Infof("--- Replayable curl command ---\n%s\n-----------------------------", curlCmd)
 

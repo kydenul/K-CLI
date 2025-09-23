@@ -21,12 +21,12 @@ sample_thereafter: 1000
 
 # Client settings
 K-CLI:
-  # OpenAI
-  provider: "OpenAI"
-  model: "deepseek/deepseek-chat-v3.1:free"
-  base_url: "https://openrouter.ai/api"
-  custom_api_path: "/v1/chat/completions"
-  api_key: "sk-or-v1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  # # OpenAI
+  # provider: "OpenAI"
+  # model: "deepseek/deepseek-chat-v3.1:free"
+  # base_url: "https://openrouter.ai/api"
+  # custom_api_path: "/v1/chat/completions"
+  # api_key: "sk-or-v1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
   # Ollama
   # provider: "Ollama"
@@ -34,13 +34,14 @@ K-CLI:
   # base_url: "http://localhost:11434/api"
   # custom_api_path: "/chat"
 
-  # # Hunyran Taiji
-  # provider: "HunyranTaiji"
-  # model: "DeepSeek-V3_1-Online-128k"
-  # base_url: "http://api.taiji.woa.com"
-  # custom_api_path: "/openapi/chat/completions"
-  # api_key: "XLhYXn5gnErB9g9ALxM50PbFltXtR6Jp"
+  # Hunyran Taiji
+  provider: "Taiji"
+  model: "DeepSeek-R1-Online"
+  base_url: "http://api.taiji.woa.com"
+  custom_api_path: "/openapi/chat/completions"
+  api_key: "XXXXXXXXXXXXXXX"
 
+  stream: true
   max_turns: 5
 
   storage_type: "file"
@@ -48,4 +49,4 @@ K-CLI:
   prompt_path: "./config/prompts.jsonl"
 
   max_tokens: 32768
-  reasoning_effort: 0
+  reasoning_effort: 1.0

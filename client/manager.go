@@ -153,7 +153,7 @@ func (mgr *Manager) HandleUserTextInput(userInput string) (*Message, error) {
 		}
 	}
 	mgr.systemPrompt = promptBuilder.String()
-	mgr.Infof("System prompt: %s", mgr.systemPrompt)
+	mgr.Debugf("System prompt: %s", mgr.systemPrompt)
 
 	// NOTE 4. Show history messages
 	messageNum := len(mgr.messages)

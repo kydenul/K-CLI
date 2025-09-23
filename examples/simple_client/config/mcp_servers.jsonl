@@ -1,2 +1,1 @@
-{"name":"GreetService","type":"streamableHttp","description":"This a Streamable HTTP MCP Server.","isActive":true,"baseUrl":"http://localhost:8080/api/v1/mcp"}
-{"name":"QWeather","type":"streamableHttp","description":"This tool is used to get the weather information for a specific location.","isActive":true,"baseUrl":"http://localhost:8080/api/v1/mcp"}
+{"name":"K-MCP-SVR","type":"streamableHttp","description":"This a Streamable HTTP MCP Server.","isActive":true,"baseUrl":"http://localhost:8080/api/v1/mcp"}

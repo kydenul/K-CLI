@@ -84,7 +84,7 @@ func (p *OpenAIFormatProvider) BuildRequest(
 				"content": message.Content,
 			}
 		}),
-		Stream: true,
+		Stream: p.config.Stream,
 	}
 	body.IncludeReasoning = strings.Contains(p.config.Model, ModelDeepSeekR1)
 	if p.config.MaxTokens > 0 {
