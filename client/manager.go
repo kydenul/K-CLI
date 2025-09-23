@@ -19,6 +19,7 @@ const (
 
 	ProviderOpenAI = "OpenAI"
 	ProviderOllama = "Ollama"
+	ProviderTaiji  = "Taiji"
 
 	DefaultChatMessageSize = DefaultMaxTurns
 )
@@ -75,6 +76,9 @@ func NewManager(
 
 	case ProviderOllama:
 		provider = NewOllmaFormatProvider(config, logger)
+
+	case ProviderTaiji:
+		provider = NewTaijiProvider(config, logger)
 
 	default: // OpenAI
 		provider = NewOpenAIFormatProvider(config, logger)
@@ -204,7 +208,10 @@ func (mgr *Manager) processUserMessage(turn *uint, message *Message) {
 	mgr.messages = append(mgr.messages, message)
 
 	// NOTE Call Streamable Chat Completions Interface
-	assistantMessage := mgr.provider.CallStreamableChatCompletions(mgr.messages, &mgr.systemPrompt)
+	assistantMessage := mgr.provider.CallStreamableChatCompletions(
+		mgr.messages,
+		&mgr.systemPrompt,
+	)
 	if assistantMessage == nil {
 		mgr.Errorf("failed to get response from provider")
 		return

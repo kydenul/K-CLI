@@ -1,24 +1,15 @@
 package client
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/kydenul/log"
 	"github.com/samber/lo"
-	"github.com/spf13/cast"
-)
-
-const (
-	ChatCompletionEndpoint = "/chat/completions"
-	DefaultTimeout         = 60 * time.Second
-	DefaultStreamChunkSize = 16 // default stream chunk size
 )
 
 var (
@@ -55,261 +46,75 @@ type OllamaChatRequest struct {
 type OllamaFormatProvider struct {
 	BaseProvider
 
-	client *http.Client
 	config *Config
 }
 
 func NewOllmaFormatProvider(config *Config, logger log.Logger) *OllamaFormatProvider {
 	return &OllamaFormatProvider{
-		BaseProvider: BaseProvider{Logger: logger},
-		config:       config,
-		client:       &http.Client{Timeout: DefaultTimeout},
+		BaseProvider: BaseProvider{
+			Logger: logger,
+			Client: &http.Client{Timeout: DefaultTimeout},
+		},
+		config: config,
 	}
 }
 
-func (p *OllamaFormatProvider) PrepareMessagesForCompletion(
-	messages []*Message, systemPrompt *string,
-) []*Message {
-	preparedMessages := make([]*Message, 0, 16)
+func (p *OllamaFormatProvider) BuildRequest(
+	ctx context.Context,
+	respChan chan StreamChunk,
+	messages []*Message,
+	systemPrompt *string,
+) (*http.Request, error) {
+	p.Infof("Starting Ollama stream request")
+	// Prepare messages for completion
+	preparedMessages := p.PrepareMessagesForCompletion(p.config.Model, messages, systemPrompt)
 
-	// Add system message if provided
-	if systemPrompt != nil && *systemPrompt != "" {
-		systemMessage := NewMessageWithOption("system", *systemPrompt, nil)
-
-		// Convert string content to content parts format
-		if content, ok := systemMessage.Content.(string); ok {
-			systemMessage.Content = content
-		} else if contentParts, ok := systemMessage.Content.([]*ContentPart); ok {
-			var apiParts []string
-			for _, part := range contentParts {
-				if part.Type == "text" {
-					apiParts = append(apiParts, part.Text)
-				}
+	// Build request body for Ollama
+	body := OllamaChatRequest{
+		Model: p.config.Model,
+		Messages: lo.Map(preparedMessages, func(message *Message, _ int) map[string]any {
+			return map[string]any{
+				"role":    message.Role,
+				"content": message.Content,
 			}
-			systemMessage.Content = apiParts
-		}
-
-		// Remove timestamp fields, otherwise likely unsupported_country_region_territory
-		systemMessage.Timestamp = nil
-		systemMessage.UnixTimestamp = 0
-
-		preparedMessages = append(preparedMessages, systemMessage)
+		}),
+		Stream: true,
 	}
 
-	// Add original messages
-	for _, msg := range messages {
-		// Handle content conversion for structured content
-		if parts, ok := msg.Content.([]*ContentPart); ok {
-			var apiParts []map[string]any
-			for _, part := range parts {
-				apiParts = append(apiParts, map[string]any{
-					"type": part.Type,
-					"text": part.Text,
-				})
-			}
-			msg.Content = apiParts
-		}
-
-		// Remove timestamp fields, otherwise likely unsupported_country_region_territory
-		msg.Timestamp = nil
-		msg.UnixTimestamp = 0
-
-		preparedMessages = append(preparedMessages, msg)
+	jsonBody, err := sonic.Marshal(body)
+	if err != nil {
+		p.Errorf("Error marshaling request body: %v", err)
+		respChan <- StreamChunk{Error: fmt.Errorf("error marshaling request body: %w", err)}
+		return nil, fmt.Errorf("error marshaling request body: %w", err)
 	}
 
-	p.Infof("Prepared messages for completion: %v", preparedMessages)
+	// Build URL
+	url := p.config.BaseURL
+	if p.config.CustomAPIPath != "" {
+		url += p.config.CustomAPIPath
+	} else {
+		url += DefaultCustomAPIPath // Ollama 使用 /chat 端点，base-url 已经包含 /api
+	}
 
-	return preparedMessages
-}
+	p.Infof("Making request to URL: %s. Request body: %s", url, string(jsonBody))
 
-func (p *OllamaFormatProvider) doCallStreamableChatCompletions(
-	messages []*Message, systemPrompt *string,
-) <-chan StreamChunk {
-	respChan := make(chan StreamChunk, DefaultStreamChunkSize)
-	// ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
-	// defer cancel()
-	ctx := context.Background()
+	// Create request
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		respChan <- StreamChunk{Error: fmt.Errorf("error creating request: %w", err)}
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
 
-	// NOTE: 异步调用
-	go func() {
-		defer close(respChan)
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
 
-		p.Infof("Starting Ollama stream request")
-		// Prepare messages for completion
-		preparedMessages := p.PrepareMessagesForCompletion(messages, systemPrompt)
-
-		// Build request body for Ollama
-		body := OllamaChatRequest{
-			Model: p.config.Model,
-			Messages: lo.Map(preparedMessages, func(message *Message, _ int) map[string]any {
-				return map[string]any{
-					"role":    message.Role,
-					"content": message.Content,
-				}
-			}),
-			Stream: true,
-		}
-
-		jsonBody, err := sonic.Marshal(body)
-		if err != nil {
-			p.Errorf("Error marshaling request body: %v", err)
-			respChan <- StreamChunk{Error: fmt.Errorf("error marshaling request body: %w", err)}
-			return
-		}
-
-		// Build URL
-		url := p.config.BaseURL
-		if p.config.CustomAPIPath != "" {
-			url += p.config.CustomAPIPath
-		} else {
-			url += DefaultCustomAPIPath // Ollama 使用 /chat 端点，base-url 已经包含 /api
-		}
-
-		p.Infof("Making request to URL: %s. Request body: %s", url, string(jsonBody))
-
-		// Create request
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
-		if err != nil {
-			respChan <- StreamChunk{Error: fmt.Errorf("error creating request: %w", err)}
-			return
-		}
-
-		// Set headers
-		req.Header.Set("Content-Type", "application/json")
-
-		// Make request
-		resp, err := p.client.Do(req)
-		if err != nil {
-			p.Errorf("HTTP request error: %v", err)
-			respChan <- StreamChunk{Error: fmt.Errorf("HTTP error getting chat response: %w", err)}
-			return
-		}
-		defer resp.Body.Close()
-
-		p.Infof("Response status: %d", resp.StatusCode)
-		if resp.StatusCode != http.StatusOK {
-			p.Errorf("HTTP error: status code %d", resp.StatusCode)
-			respChan <- StreamChunk{Error: fmt.Errorf("HTTP error: status code %d", resp.StatusCode)}
-			return
-		}
-
-		p.Info("Starting to process streaming response")
-
-		// Process streaming response
-		scanner := bufio.NewScanner(resp.Body)
-		lineCount := 0
-		for scanner.Scan() {
-			// NOTE:
-			select {
-			case <-ctx.Done():
-				p.Info("Context cancelled")
-				respChan <- StreamChunk{Error: ctx.Err()}
-				return
-
-			default:
-			}
-
-			// NOTE:
-			line := scanner.Text()
-			lineCount++
-			p.Debugf("Received line %d: %s", lineCount, line)
-
-			if line == "" {
-				continue
-			}
-
-			response := &OllamaStreamResponse{}
-			if err := sonic.UnmarshalString(line, response); err != nil {
-				p.Errorf("Error unmarshaling response line: %v", err)
-				continue
-			}
-
-			// NOTE: stream chunk DONE
-			if response.Done {
-				p.Info("Stream marked as done")
-				if response.Message.Content != nil &&
-					cast.ToString(response.Message.Content) != "" {
-					content := cast.ToString(response.Message.Content)
-					p.Infof("Sending final chunk: %s", content)
-					respChan <- StreamChunk{Content: content, Done: true}
-				} else {
-					p.Info("Sending done signal")
-					respChan <- StreamChunk{Done: true}
-				}
-				break
-			}
-
-			// NOTE: Send stream chunk to respsonse channel
-			if response.Message.Content != nil {
-				content := cast.ToString(response.Message.Content)
-				if content != "" {
-					p.Debugf("Goroutine sends chunk: %s", content)
-					respChan <- StreamChunk{Content: content, Done: false}
-				}
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			respChan <- StreamChunk{Error: fmt.Errorf("error reading response stream: %w", err)}
-		}
-	}()
-
-	p.Info("Ollama CallChatCompletionsStream launched goroutine")
-	return respChan
+	return req, nil
 }
 
 func (p *OllamaFormatProvider) CallStreamableChatCompletions(
 	messages []*Message,
 	prompt *string,
 ) *Message {
-	ret := p.HandleStreamableChat(p.doCallStreamableChatCompletions(messages, prompt))
-	if ret.Err != nil {
-		p.Error(ret.Err)
-		return nil
-	}
-
-	if ret.Done {
-		p.Info("Chat completed")
-		return nil
-	}
-
-	var fullContent strings.Builder
-	fullContent.WriteString(ret.Content)
-
-	// handle stream
-	if ret.StreamCh != nil {
-		for chunk := range ret.StreamCh {
-			if chunk.Error != nil {
-				p.Errorln("Stream error:", chunk.Error)
-				break
-			}
-
-			if chunk.Done {
-				p.Info("Stream completed")
-				break
-			}
-
-			if chunk.Content != "" {
-				fullContent.WriteString(chunk.Content)
-				p.Debugf("Assistant chunk: %s", chunk.Content)
-			}
-		}
-	}
-
-	contentFull := fullContent.String()
-	p.Infof("Assistant: %s", contentFull)
-
-	assistantMessage := NewMessageWithOption(
-		RoleAssistant,
-		contentFull,
-		&MessageOption{
-			ReasoningContent: contentFull,
-			Provider:         p.config.Provider,
-			Model:            p.config.Model,
-			ReasoningEffort:  DefaultReasoningEffort,
-			Links:            nil,
-		})
-	p.Infof("Assistant: %s", assistantMessage.Content)
-
-	return assistantMessage
+	return p.BaseProvider.CallStreamableChatCompletions(
+		p.config.Provider, p.config.ReasoningEffort, messages, prompt, p.BuildRequest)
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/http"
 )
 
 // ChatRepo (Chat Repository) defines the interface for chat repository operations
@@ -59,4 +60,11 @@ type Provider interface {
 		messages []*Message,
 		prompt *string,
 	) *Message
+
+	BuildRequest(
+		_ context.Context,
+		_ chan StreamChunk,
+		_ []*Message,
+		_ *string,
+	) (*http.Request, error)
 }
