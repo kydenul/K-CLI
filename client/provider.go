@@ -191,13 +191,13 @@ func (p *BaseProvider) ProcessStreamableResponse(
 			if choice.FinishReason != "" {
 				p.Info("Stream marked as done")
 
-				// 优先使用 reasoning_content，如果为空则使用 content
+				// 非优先使用 reasoning_content，如果为空则使用 content
 				var finalContent string
 				if choice.Delta != nil {
-					if choice.Delta.ReasoningContent != "" {
-						finalContent = choice.Delta.ReasoningContent
-					} else {
+					if choice.Delta.Content != "" {
 						finalContent = choice.Delta.Content
+					} else {
+						finalContent = choice.Delta.ReasoningContent
 					}
 				}
 
@@ -226,10 +226,10 @@ func (p *BaseProvider) ProcessStreamableResponse(
 			// NOTE: Send stream chunk to response channel
 			// 优先使用 reasoning_content，如果为空则使用 content
 			var chunkContent string
-			if choice.Delta.ReasoningContent != "" {
-				chunkContent = choice.Delta.ReasoningContent
-			} else {
+			if choice.Delta.Content != "" {
 				chunkContent = choice.Delta.Content
+			} else {
+				chunkContent = choice.Delta.ReasoningContent
 			}
 
 			respChan <- StreamChunk{
@@ -326,7 +326,7 @@ func (p *BaseProvider) waitForNextChunk(streamCh <-chan StreamChunk) LLMStreamRe
 		}
 	}
 
-	p.Info("Empty chunk, waiting for next")
+	p.Debug("Empty chunk, waiting for next")
 	return p.waitForNextChunk(streamCh)
 }
 
