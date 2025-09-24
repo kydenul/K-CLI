@@ -26,7 +26,7 @@ type Message struct {
 	UnixTimestamp int64      `json:"unix_timestamp,omitempty"`
 
 	ReasoningContent string         `json:"reasoning_content,omitempty"`
-	ReasoningEffort  float64        `json:"reasoning_effort,omitempty"`
+	ReasoningEffort  string         `json:"reasoning_effort,omitempty"`
 	Links            []string       `json:"links,omitempty"`
 	Images           []string       `json:"images,omitempty"`
 	Model            string         `json:"model,omitempty"`
@@ -41,7 +41,7 @@ type Message struct {
 // MessageOption contains optional fields for creating a message
 type MessageOption struct {
 	ReasoningContent string
-	ReasoningEffort  float64
+	ReasoningEffort  string
 
 	Links  []string
 	Images []string
@@ -73,7 +73,7 @@ func NewMessageWithOption(role, content string, opt *MessageOption) *Message {
 		if opt.ReasoningContent != "" {
 			message.ReasoningContent = opt.ReasoningContent
 		}
-		if opt.ReasoningEffort != 0 {
+		if opt.ReasoningEffort != "" {
 			message.ReasoningEffort = opt.ReasoningEffort
 		}
 

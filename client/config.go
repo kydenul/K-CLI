@@ -29,7 +29,7 @@ const (
 	DefaultPromptPath      = "~/.config/k-cli/prompts.jsonl"
 	DefaultMaxTurns        = 10
 	DefaultMaxTokens       = 32768
-	DefaultReasoningEffort = 1.0
+	DefaultReasoningEffort = "medium"
 )
 
 type Config struct {
@@ -51,10 +51,10 @@ type Config struct {
 	// Prompt
 	PromptPath string `mapstructure:"prompt_path"` // Prompt 配置文件路径
 
-	MaxTurns        uint    `mapstructure:"max_turns"`        // 最多调用 MCP Server 的次数
-	MaxTokens       uint64  `mapstructure:"max_tokens"`       // 最大 token 数
-	ReasoningEffort float64 `mapstructure:"reasoning_effort"` // 推理努力度
-	Stream          bool    `mapstructure:"stream"`           // 是否使用流式输出
+	MaxTurns        uint   `mapstructure:"max_turns"`        // 最多调用 MCP Server 的次数
+	MaxTokens       uint64 `mapstructure:"max_tokens"`       // 最大 token 数
+	ReasoningEffort string `mapstructure:"reasoning_effort"` // 推理努力度 => high | medium | low | minimal
+	Stream          bool   `mapstructure:"stream"`           // 是否使用流式输出
 }
 
 // NewDefaultConfig returns a new Config with default values

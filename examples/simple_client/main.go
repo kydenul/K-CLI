@@ -9,14 +9,16 @@ import (
 	"github.com/kydenul/K-CLI/client"
 )
 
+const ConfigPath = "/Users/kyden/git-space/K-CLI/examples/simple_client/config"
+
 // Global Logger
 var (
 	Logger *log.Log
 
-	ClientPath = filepath.Join(".", "config", "client.yaml")
-	ChatsPath  = filepath.Join(".", "config", "chats.jsonl")
-	MCPSvrPath = filepath.Join(".", "config", "mcp_servers.jsonl")
-	PromptPath = filepath.Join(".", "config", "prompts.jsonl")
+	ClientPath = filepath.Join(ConfigPath, "client.yaml")
+	ChatsPath  = filepath.Join(ConfigPath, "chats.jsonl")
+	MCPSvrPath = filepath.Join(ConfigPath, "mcp_servers.jsonl")
+	PromptPath = filepath.Join(ConfigPath, "prompts.jsonl")
 )
 
 func main() {
@@ -61,12 +63,24 @@ func main() {
 	Logger.Info("PromptRepo initialized")
 
 	mgr := client.NewManager(Logger, chatRepo, mcpRepo, promptRepo, nil, config)
+	// NOTE Clean up
+	defer func() {
+		if mgr.MCPMgr != nil {
+			mgr.MCPMgr.ClossAllSession()
+		}
+	}()
 
 	resp, err := mgr.HandleUserTextInput("今天上海天气怎么样？")
 	if err != nil {
 		Logger.Errorf("failed to run: %v", err)
 		return
 	}
+	Logger.Infof("First => Response: %s", resp.Content)
 
-	Logger.Infof("Response: %s", resp.Content)
+	resp, err = mgr.HandleUserTextInput("今天上海天气怎么样？")
+	if err != nil {
+		Logger.Errorf("failed to run: %v", err)
+		return
+	}
+	Logger.Infof("Second => Response: %s", resp.Content)
 }

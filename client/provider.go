@@ -191,14 +191,23 @@ func (p *BaseProvider) ProcessStreamableResponse(
 			if choice.FinishReason != "" {
 				p.Info("Stream marked as done")
 
-				if choice.Delta != nil && choice.Delta.Content != "" {
-					content := choice.Delta.Content
-					p.Debugf("Sending final chunk: %s", content)
+				// 优先使用 reasoning_content，如果为空则使用 content
+				var finalContent string
+				if choice.Delta != nil {
+					if choice.Delta.ReasoningContent != "" {
+						finalContent = choice.Delta.ReasoningContent
+					} else {
+						finalContent = choice.Delta.Content
+					}
+				}
+
+				if finalContent != "" {
+					p.Debugf("Sending final chunk: %s", finalContent)
 					respChan <- StreamChunk{
 						ID:    response.ID,
 						Model: response.Model,
 
-						Content: content,
+						Content: finalContent,
 						Done:    true,
 					}
 				} else {
@@ -214,19 +223,32 @@ func (p *BaseProvider) ProcessStreamableResponse(
 				break
 			}
 
-			// NOTE: Send stream chunk to respsonse channel -> choice.Delta.Content
+			// NOTE: Send stream chunk to response channel
+			// 优先使用 reasoning_content，如果为空则使用 content
+			var chunkContent string
+			if choice.Delta.ReasoningContent != "" {
+				chunkContent = choice.Delta.ReasoningContent
+			} else {
+				chunkContent = choice.Delta.Content
+			}
+
 			respChan <- StreamChunk{
 				ID:    response.ID,
 				Model: response.Model,
 
-				Content: choice.Delta.Content,
+				Content: chunkContent,
 				Done:    false,
 			}
 		}
 	}
 
+	p.Infof("Finished scanning response body, total lines: %d", lineCount)
+
 	if err := scanner.Err(); err != nil {
+		p.Errorf("Scanner error: %v", err)
 		respChan <- StreamChunk{Error: fmt.Errorf("error reading response stream: %w", err)}
+	} else if lineCount == 0 {
+		p.Warn("No lines received from response body - this might indicate an empty response")
 	}
 }
 
@@ -310,7 +332,7 @@ func (p *BaseProvider) waitForNextChunk(streamCh <-chan StreamChunk) LLMStreamRe
 
 func (p *BaseProvider) CallStreamableChatCompletions(
 	provider string,
-	reasoningEffort float64,
+	reasoningEffort string,
 	messages []*Message,
 	prompt *string,
 	BuildRequest func(

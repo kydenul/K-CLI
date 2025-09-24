@@ -21,14 +21,15 @@ type OpenAIChatRequest struct {
 	IncludeReasoning bool `json:"include_reasoning,omitempty"` // deepseek-r1
 	Thinking         bool `json:"thinking,omitempty"`          // deepseekv3.1
 
-	ReasoningEffort float64 `json:"reasoning_effort,omitempty"`
-	MaxTokens       uint64  `json:"max_tokens,omitempty"`
+	ReasoningEffort string `json:"reasoning_effort,omitempty"`
+	MaxTokens       uint64 `json:"max_tokens,omitempty"`
 }
 
 // OpenAIStreamChoiceDelta 代表 OpenAI 流中的增量变化
 type OpenAIStreamChoiceDelta struct {
-	Content string `json:"content"`
-	Role    string `json:"role"` // 通常只在第一个数据块出现
+	Content          string `json:"content"`
+	ReasoningContent string `json:"reasoning_content"` // DeepSeek-R1 模型的推理内容
+	Role             string `json:"role"`              // 通常只在第一个数据块出现
 }
 
 // OpenAIStreamChoice 代表 OpenAI 流中的一个选项
@@ -91,7 +92,7 @@ func (p *OpenAIFormatProvider) BuildRequest(
 		body.MaxTokens = p.config.MaxTokens
 	}
 
-	if p.config.ReasoningEffort > 0 {
+	if p.config.ReasoningEffort != "" {
 		body.ReasoningEffort = p.config.ReasoningEffort
 	}
 

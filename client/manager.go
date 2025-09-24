@@ -31,7 +31,7 @@ type Manager struct {
 	chat     *Chat      // current chat
 	messages []*Message // current message in chat
 
-	mcpMgr   *MCPSvrManager
+	MCPMgr   *MCPSvrManager
 	provider Provider
 
 	promptSvr    *PromptSvr
@@ -94,7 +94,7 @@ func NewManager(
 		systemPrompt: "",
 		promptSvr:    NewPromptSvr(promptRepo, logger),
 
-		mcpMgr:   NewMCPSvrManager(mcpReop, logger),
+		MCPMgr:   NewMCPSvrManager(mcpReop, logger),
 		provider: provider,
 		config:   config,
 	}
@@ -111,20 +111,13 @@ func NewManager(
 		mgr.Info("new chat created, chat id: ", mgr.chatID)
 	}
 
-	mgr.mcpMgr.initMCPServer(context.Background())
+	mgr.MCPMgr.initMCPServer(context.Background())
 
 	return mgr
 }
 
 // HandleUserTextInput handle user TEXT input without any link, image
 func (mgr *Manager) HandleUserTextInput(userInput string) (*Message, error) {
-	// NOTE Clean up
-	defer func() {
-		if mgr.mcpMgr != nil {
-			mgr.mcpMgr.ClossAllSession()
-		}
-	}()
-
 	mgr.Info("Starting chat session...")
 
 	// Load chat if chat_id was provided and not already loaded
@@ -139,9 +132,9 @@ func (mgr *Manager) HandleUserTextInput(userInput string) (*Message, error) {
 	promptBuilder.WriteString(TimePrompt + "\n")
 
 	// NOTE 2. Initialize MCP and system prompt if MCP server settings exist
-	if mgr.mcpMgr != nil {
+	if mgr.MCPMgr != nil {
 		promptBuilder.WriteString(
-			mgr.mcpMgr.Prompt(context.Background(), mgr.promptSvr) + "\n")
+			mgr.MCPMgr.Prompt(context.Background(), mgr.promptSvr) + "\n")
 	}
 
 	// NOTE 3. Initialize prompt
@@ -235,7 +228,7 @@ func (mgr *Manager) processUserMessage(turn *uint, message *Message) {
 
 	mgr.Infof("Assistant: %s\r\n, Tool: %s", plainContent, *toolContent)
 
-	MCPToolUse := mgr.mcpMgr.ExtractMCPToolUse(*toolContent)
+	MCPToolUse := mgr.MCPMgr.ExtractMCPToolUse(*toolContent)
 	if MCPToolUse == nil {
 		return
 	}
@@ -252,7 +245,7 @@ func (mgr *Manager) processUserMessage(turn *uint, message *Message) {
 	mgr.messages = append(mgr.messages, assistantMessage)
 
 	// Execute tool and get results
-	toolResults, err := mgr.mcpMgr.CallTool(context.Background(), toolName, args)
+	toolResults, err := mgr.MCPMgr.CallTool(context.Background(), toolName, args)
 	if err != nil {
 		mgr.Errorf("failed to call tool: %v", err)
 		return

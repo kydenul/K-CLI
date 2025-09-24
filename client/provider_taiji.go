@@ -17,7 +17,7 @@ type TaijiChatRequest struct {
 	QueryID     string     `json:"query_id"`
 	Model       string     `json:"model"`
 	Messages    []*Message `json:"messages"`
-	Temperature float64    `json:"temperature"` // 调节概率值，取值区间为 (0.0, 2.0]，默认为 1.0
+	Temperature string     `json:"temperature"` // 调节概率值，取值区间为 (0.0, 2.0]，默认为 1.0
 	TopP        float64    `json:"top_p"`       // 采样累积概率的阈值, 取值区间为 [0.0, 1.0]，默认值 1.0
 	MaxTokens   uint64     `json:"max_tokens"`
 	Stream      bool       `json:"stream"`
