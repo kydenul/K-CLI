@@ -28,7 +28,7 @@ K-CLI:
   # custom_api_path: "/v1/chat/completions"
   # api_key: "sk-or-v1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
-  # Ollama
+  # # Ollama
   # provider: "Ollama"
   # model: "llama3.1"
   # base_url: "http://localhost:11434/api"
@@ -49,4 +49,4 @@ K-CLI:
   prompt_path: "./config/prompts.jsonl"
 
   max_tokens: 32768
-  reasoning_effort: 1.0
+  reasoning_effort: "low"
