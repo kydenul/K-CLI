@@ -392,7 +392,7 @@ func (p *BaseProvider) CallStreamableChatCompletions(
 			ReasoningEffort:  reasoningEffort,
 			Links:            nil,
 		})
-	p.Infof("Assistant: %s", assistantMessage.Content)
+	// p.Infof("Assistant: %s", assistantMessage.Content)
 
 	return assistantMessage
 }
