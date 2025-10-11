@@ -115,6 +115,6 @@ func (p *OllamaFormatProvider) CallStreamableChatCompletions(
 	messages []*Message,
 	prompt *string,
 ) *Message {
-	return p.BaseProvider.CallStreamableChatCompletions(
+	return p.CallStreamableChatCompletionsWithBuilder(
 		p.config.Provider, p.config.ReasoningEffort, messages, prompt, p.BuildRequest)
 }

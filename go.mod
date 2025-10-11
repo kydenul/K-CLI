@@ -6,8 +6,8 @@ require (
 	github.com/bytedance/sonic v1.14.1
 	github.com/google/uuid v1.6.0
 	github.com/kydenul/log v1.5.1
-	github.com/modelcontextprotocol/go-sdk v0.8.0
-	github.com/samber/lo v1.51.0
+	github.com/modelcontextprotocol/go-sdk v1.0.0
+	github.com/samber/lo v1.52.0
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
 )
@@ -30,9 +30,9 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/arch v0.21.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/arch v0.22.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )

@@ -330,7 +330,7 @@ func (p *BaseProvider) waitForNextChunk(streamCh <-chan StreamChunk) LLMStreamRe
 	return p.waitForNextChunk(streamCh)
 }
 
-func (p *BaseProvider) CallStreamableChatCompletions(
+func (p *BaseProvider) CallStreamableChatCompletionsWithBuilder(
 	provider string,
 	reasoningEffort string,
 	messages []*Message,
