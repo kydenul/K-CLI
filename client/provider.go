@@ -123,7 +123,7 @@ func (p *BaseProvider) PrepareMessagesForCompletion(
 	for _, msg := range messages {
 		// Handle content conversion for structured content
 		if parts, ok := msg.Content.([]*ContentPart); ok {
-			var apiParts []map[string]any
+			apiParts := make([]map[string]any, 0, len(parts))
 			for _, part := range parts {
 				apiParts = append(apiParts, map[string]any{
 					"type": part.Type,

@@ -31,7 +31,6 @@ func main() {
 		panic(err)
 	}
 	Logger = log.NewLog(opt)
-	defer Logger.Sync()
 	Logger.Info("Logger initialized")
 
 	// NOTE: Initialize Config

@@ -13,7 +13,7 @@ import (
 // Mock logger for testing
 type discardLogger struct{}
 
-func (m *discardLogger) Sync() {}
+func (m *discardLogger) Sync() error { return nil }
 
 func (m *discardLogger) Debug(args ...any) {}
 
